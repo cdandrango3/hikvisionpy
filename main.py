@@ -1,7 +1,12 @@
+import datetime
 import json
+from random import random
+from time import sleep
+
 import requests
 import xmltodict
 import asyncio
+from multiprocessing import Process, Queue
 from hikvisionapi.hikvisionapi import response_parser
 from httpcore.backends import asyncio
 from requests.auth import HTTPDigestAuth
@@ -17,11 +22,21 @@ class Vehicle():
 
                            data='<AfterTime><picTime>2020-03-07T21:00:00Z</picTime></AfterTime>'
                               )
+
+       def reader(q: Queue):
+           while True:
+               job = {'date': datetime.now().isoformat(), 'number': random()}
+               q.put(job)
+               print('Enqueued new job', job)
+               sleep(5)
        def getlastplate(self):
-           print(self.response.text)
-           print(response_parser(self.response))
-           plate = self.response_parser(self.response)['Plates']['Plate'][-1]['plateNumber']
-           return plate
+               plate = self.response_parser(self.response)['Plates']['Plate'][-1]['plateNumber']
+               return plate
+       def getAllplate(self,n):
+           plate = self.response_parser(self.response)['Plates']['Plate'][-n]['plateNumber']
+           captureTime= self.response_parser(self.response)['Plates']['Plate'][-n]['captureTime']
+           sleep(5)
+           return plate,captureTime
 
        def response_parser(self,response, present='dict'):
            if isinstance(response, (list,)):
@@ -40,4 +55,15 @@ class Vehicle():
            else:
                return result
 car=Vehicle();
-print(car.getlastplate())
+while True:
+    p1,c1=car.getAllplate(1)
+    p2,c2=car.getAllplate(3)
+    print(p1,c1)
+    print(p2,c2)
+
+
+
+
+
+
+
